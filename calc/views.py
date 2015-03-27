@@ -1,8 +1,9 @@
 # coding: utf-8
+from django.views.generic import TemplateView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-class Calc(APIView):
+class CalcApi(APIView):
     def __init__(self, *args, **kwargs):
         self._stack = []
         self._op_stack = []
@@ -13,7 +14,7 @@ class Calc(APIView):
             '-': 2,
             '(': 1,
         }
-        super(Calc, self).__init__(*args, **kwargs)
+        super(CalcApi, self).__init__(*args, **kwargs)
 
     def _evalute(self):
         def _execute_tokens(token, token_left, token_right):
@@ -35,7 +36,7 @@ class Calc(APIView):
                 token_left = result.pop()
                 result_token = _execute_tokens(token,token_left,token_right)
                 result.append(result_token)
-        return result.pop()
+        return result.pop(), False
 
     def _append_token(self, token):
         if token not in self._prec.keys() and token != ')':
@@ -61,32 +62,18 @@ class Calc(APIView):
         return 'Add token success', False
 
     def post(self, request):
-        token = str(request.POST.get('token', '')).replace(',', '.')
-        if token == '=':
-            result, error = self._evalute()
-        else:
+        tokens = request.POST.getlist('tokens[]')
+        for token in tokens:
             result, error = self._append_token(token)
+            if error:
+                return Response({'error': result})
+
+        result, error = self._evalute()
 
         if error:
             return Response({'error': result})
         else:
-            return Response({'result': result})
+            return Response({'response': result})
 
-
-        # try:
-        #     a = request.POST.get("a"); b = request.POST.get("b")
-        #     a = int(a) if str(a).isdigit() else float(str(request.POST.get("a")).replace(",", "."))
-        #     b = int(b) if str(b).isdigit() else float(str(request.POST.get("b")).replace(",", "."))
-        # except:
-        #     return Response({"response": "Value error"})
-        #
-        #
-        # op = request.POST.get("op")
-        #
-        # if   op == "+": result = a + b
-        # elif op == "-": result = a - b
-        # elif op == "*": result = a * b
-        # elif op == "/": result = a / b
-        # else: result = "not calculate result"
-        #
-        # return Response({"response": result})
+class CalcView(TemplateView):
+    template_name = "base.html"

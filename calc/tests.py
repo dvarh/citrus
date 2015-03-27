@@ -1,10 +1,10 @@
 from django.test import SimpleTestCase
 
-from calc.views import Calc
+from calc.views import CalcApi
 
-class CalcTest(SimpleTestCase):
+class CalcApiTest(SimpleTestCase):
     def setUp(self):
-        self.calc = Calc()
+        self.calc = CalcApi()
 
     def test_append_token(self):
         self.assertEqual([], self.calc._stack)
@@ -37,4 +37,4 @@ class CalcTest(SimpleTestCase):
         for token in ['123.54', '-', '-157', '*', '(', '12.34', '+', '2', ')']:
             self.calc._append_token(token)
 
-        self.assertEqual(2374.92, self.calc._evalute())
+        self.assertEqual((2374.92, False), self.calc._evalute())
